@@ -17,6 +17,7 @@ namespace Tournament.Core.Repositories
         void Add(TournamentDetails tournament);
         void Update(TournamentDetails tournament);
         void Remove(TournamentDetails tournament);
+        Task<int> SaveChangesAsync();
 
     }
 }

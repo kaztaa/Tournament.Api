@@ -19,7 +19,6 @@ namespace Tournament.Data.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Fluent API configuration for the one-to-many relationship
             modelBuilder.Entity<Game>()
                 .HasOne(g => g.Tournament)
                 .WithMany(t => t.Games)

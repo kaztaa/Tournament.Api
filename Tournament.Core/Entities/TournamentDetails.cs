@@ -11,8 +11,7 @@ namespace Tournament.Core.Entities
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
-
-        // Navigation property for one-to-many relationship
         public ICollection<Game> Games { get; set; } = new List<Game>();
+
     }
 }

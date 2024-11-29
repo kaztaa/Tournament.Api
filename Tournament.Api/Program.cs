@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Configuration;
 using Tournament.Api.Extensions;
 using Tournament.Data.Data;
+using Tournament.Core.Repositories;
+using Tournament.Data.Repositories;
 
 namespace Tournament.Api
 {
@@ -24,8 +26,10 @@ namespace Tournament.Api
             builder.Services.AddControllers(opt => opt.ReturnHttpNotAcceptable = true)
                 .AddNewtonsoftJson()
                 .AddXmlDataContractSerializerFormatters();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-   
+            builder.Services.AddAutoMapper(typeof(TournamentMappings));
+
             var app = builder.Build();
             await app.SeedDataAsync();
 

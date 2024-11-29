@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tournament.Core.Entities;
+using Tournament.Core.Repositories;
 using Tournament.Data.Data;
 
 namespace Tournament.Api.Controllers
@@ -14,25 +16,29 @@ namespace Tournament.Api.Controllers
     [ApiController]
     public class TournamentDetailsController : ControllerBase
     {
-        private readonly TournamentApiContext _context;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public TournamentDetailsController(TournamentApiContext context)
+        public TournamentDetailsController(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _context = context;
-        }
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
 
+        }
         // GET: api/TournamentDetails
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TournamentDetails>>> GetTournamentDetails()
         {
-            return await _context.TournamentDetails.ToListAsync();
+            var tournaments = await _unitOfWork.TournamentRepository.GetAllAsync();
+
+            return Ok(tournaments);
         }
 
         // GET: api/TournamentDetails/5
         [HttpGet("{id}")]
         public async Task<ActionResult<TournamentDetails>> GetTournamentDetails(int id)
         {
-            var tournamentDetails = await _context.TournamentDetails.FindAsync(id);
+            var tournamentDetails = await _unitOfWork.TournamentRepository.GetAsync(id);
 
             if (tournamentDetails == null)
             {
@@ -52,23 +58,14 @@ namespace Tournament.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(tournamentDetails).State = EntityState.Modified;
+            var tournament = await _unitOfWork.TournamentRepository.GetAsync(id);
+            if (tournament == null)
+            {
+                return NotFound();
+            }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TournamentDetailsExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            _unitOfWork.TournamentRepository.Update(tournament);
+            await _unitOfWork.CompleteAsync();
 
             return NoContent();
         }
@@ -78,8 +75,8 @@ namespace Tournament.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<TournamentDetails>> PostTournamentDetails(TournamentDetails tournamentDetails)
         {
-            _context.TournamentDetails.Add(tournamentDetails);
-            await _context.SaveChangesAsync();
+            _unitOfWork.TournamentRepository.Add(tournamentDetails);
+            await _unitOfWork.TournamentRepository.SaveChangesAsync();
 
             return CreatedAtAction("GetTournamentDetails", new { id = tournamentDetails.Id }, tournamentDetails);
         }
@@ -88,21 +85,21 @@ namespace Tournament.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTournamentDetails(int id)
         {
-            var tournamentDetails = await _context.TournamentDetails.FindAsync(id);
+            var tournamentDetails = await _unitOfWork.TournamentRepository.GetAsync(id);
             if (tournamentDetails == null)
             {
                 return NotFound();
             }
 
-            _context.TournamentDetails.Remove(tournamentDetails);
-            await _context.SaveChangesAsync();
+            _unitOfWork.TournamentRepository.Remove(tournamentDetails);
+            await _unitOfWork.TournamentRepository.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool TournamentDetailsExists(int id)
-        {
-            return _context.TournamentDetails.Any(e => e.Id == id);
-        }
+        //private bool TournamentDetailsExists(int id)
+        //{
+        //    return _context.TournamentDetails.Any(e => e.Id == id);
+        //}
     }
 }
